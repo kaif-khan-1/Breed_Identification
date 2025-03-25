@@ -28,6 +28,8 @@ if not os.path.exists(MODEL_PATH):
 
 model = load_model(MODEL_PATH, compile=False)
 
+# ✅ Define Image Size (Should match the training size)
+IMAGE_SIZE = (224, 224)
 
 # ✅ FastAPI App
 app = FastAPI(title="Dog Breed Classification API", description="Upload an image to predict the dog breed.")
