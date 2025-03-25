@@ -54,12 +54,10 @@ async def predict(file: UploadFile = File(...)):
     img_array = preprocess_image(file)
     predictions = model.predict(img_array)
     predicted_class = np.argmax(predictions, axis=1)[0]
-
-    
-return {
-        "predicted_breed": predicted_breed,
-        "confidence": float(np.max(predictions))
-    }
+    return {
+            "predicted_breed": predicted_breed,
+            "confidence": float(np.max(predictions))
+        }
 
 # ✅ Run FastAPI Server
 if __name__ == "__main__":
