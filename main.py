@@ -55,13 +55,11 @@ async def predict(file: UploadFile = File(...)):
     predictions = model.predict(img_array)
     predicted_class = np.argmax(predictions, axis=1)[0]
 
-    # ✅ Extract Class Labels from the Model (if available)
-    class_indices = model.class_names if hasattr(model, 'class_names') else ["Breed1", "Breed2", "Breed3", "Breed4", "Breed5", "Breed6", "Breed7", "Breed8"]
     
-    # ✅ Get Breed Name
-    predicted_breed = class_indices[predicted_class] if predicted_class < len(class_indices) else "Unknown"
-
-    return {"predicted_breed": predicted_breed, "confidence": float(np.max(predictions))}
+return {
+        "predicted_breed": predicted_breed,
+        "confidence": float(np.max(predictions))
+    }
 
 # ✅ Run FastAPI Server
 if __name__ == "__main__":
