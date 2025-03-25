@@ -8,6 +8,7 @@ from PIL import Image
 import io
 import os
 import gdown
+import json
 
 # ✅ Disable GPU for Compatibility on Railway
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
@@ -50,20 +51,20 @@ def preprocess_image(file: UploadFile):
     img_array = np.expand_dims(img_array, axis=0)  # Add batch dimension
     return img_array
 
-# ✅ Function to Predict Dog Breed (Using Model)
+# ✅ Load Class Labels from JSON
+LABELS_PATH = "class_labels.json"
+if os.path.exists(LABELS_PATH):
+    with open(LABELS_PATH, "r") as file:
+        CLASS_LABELS = json.load(file)
+else:
+    CLASS_LABELS = [f"Breed {i}" for i in range(8)]  # Fallback labels
+
 def predict_breed(img_array):
     predictions = model.predict(img_array)
     predicted_class = np.argmax(predictions, axis=1)[0]
 
-    # ✅ Extract breed names from model training data (dynamically)
-    train_generator = model.train_function if hasattr(model, 'train_function') else None
-    class_indices = train_generator.class_indices if train_generator else None
-
-    if class_indices:
-        breed_names = list(class_indices.keys())
-        predicted_breed = breed_names[predicted_class]
-    else:
-        predicted_breed = f"Breed {predicted_class + 1}"  # Default label
+    # ✅ Correctly map prediction to breed name
+    predicted_breed = CLASS_LABELS[predicted_class] if predicted_class < len(CLASS_LABELS) else "Unknown"
 
     return predicted_breed, float(np.max(predictions))
 
@@ -78,3 +79,9 @@ async def predict(file: UploadFile = File(...)):
 # ✅ Run FastAPI Server
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
+
+
+
+
+
