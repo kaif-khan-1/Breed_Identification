@@ -6,7 +6,11 @@ from tensorflow.keras.preprocessing import image
 from fastapi import FastAPI, File, UploadFile
 from PIL import Image
 import io
+import os
 
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Force TensorFlow to use CPU
+
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"  # Disable OneDNN for compatibility with TensorFlow 2.6.0
 
 # ✅ Load the trained model
 MODEL_PATH = "model.keras"  # Update this if using .h5
