@@ -2,19 +2,28 @@ import uvicorn
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.models import load_model
-from tensorflow.keras.preprocessing import image
 from fastapi import FastAPI, File, UploadFile
 from PIL import Image
 import io
 import os
 import json
+import gdown
 
 # ✅ Disable GPU & OneDNN for Railway
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 
+# ✅ Define Model Path & Google Drive File ID
+MODEL_PATH = "dog_breed_classifier.h5"  # Change to .h5 if needed
+GOOGLE_DRIVE_FILE_ID = "1B79Kb1IbqeYp7GJeBJm7KVDF1QYQ0xOK"  # Replace with actual Google Drive File ID
+
+# ✅ Download model only if it's missing
+if not os.path.exists(MODEL_PATH):
+    print("📥 Downloading model from Google Drive...")
+    gdown.download(f"https://drive.google.com/uc?id={GOOGLE_DRIVE_FILE_ID}", MODEL_PATH, quiet=False)
+    print("✅ Model downloaded successfully!")
+
 # ✅ Load Model (Ensure it exists)
-MODEL_PATH = "model.keras"  # Change to .h5 if needed
 if not os.path.exists(MODEL_PATH):
     raise FileNotFoundError(f"❌ Model file '{MODEL_PATH}' not found. Ensure it is uploaded correctly.")
 
@@ -44,7 +53,7 @@ def preprocess_image(file: UploadFile):
     image_bytes = file.file.read()
     img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
     img = img.resize((224, 224))
-    img_array = image.img_to_array(img) / 255.0
+    img_array = np.array(img) / 255.0  # Corrected conversion to NumPy array
     img_array = np.expand_dims(img_array, axis=0)
     return img_array
 
