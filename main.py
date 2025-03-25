@@ -6,7 +6,6 @@ from fastapi import FastAPI, File, UploadFile
 from PIL import Image
 import io
 import os
-import json
 import gdown
 
 # ✅ Disable GPU & OneDNN for Railway
@@ -29,13 +28,6 @@ if not os.path.exists(MODEL_PATH):
 
 model = load_model(MODEL_PATH, compile=False)
 
-# ✅ Load Class Labels from JSON (or Default)
-LABELS_PATH = "class_labels.json"
-if os.path.exists(LABELS_PATH):
-    with open(LABELS_PATH, "r") as file:
-        CLASS_LABELS = json.load(file)
-else:
-    CLASS_LABELS = ["Unknown"]  # Default
 
 # ✅ FastAPI App
 app = FastAPI(title="Dog Breed Classification API", description="Upload an image to predict the dog breed.")
@@ -44,17 +36,14 @@ app = FastAPI(title="Dog Breed Classification API", description="Upload an image
 def home():
     return {"message": "Welcome to the Dog Breed Classification API!"}
 
-@app.get("/favicon.ico")
-def favicon():
-    return {}
 
-# ✅ Preprocess Uploaded Image
+# ✅ Image Preprocessing
 def preprocess_image(file: UploadFile):
     image_bytes = file.file.read()
     img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
-    img = img.resize((224, 224))
-    img_array = np.array(img) / 255.0  # Corrected conversion to NumPy array
-    img_array = np.expand_dims(img_array, axis=0)
+    img = img.resize(IMAGE_SIZE)
+    img_array = np.array(img) / 255.0  # Normalize the image
+    img_array = np.expand_dims(img_array, axis=0)  # Reshape for model
     return img_array
 
 # ✅ Prediction Endpoint
@@ -64,13 +53,14 @@ async def predict(file: UploadFile = File(...)):
     predictions = model.predict(img_array)
     predicted_class = np.argmax(predictions, axis=1)[0]
 
-    if predicted_class < len(CLASS_LABELS):
-        predicted_breed = CLASS_LABELS[predicted_class]
-    else:
-        predicted_breed = "Unknown"
+    # ✅ Extract Class Labels from the Model (if available)
+    class_indices = model.class_names if hasattr(model, 'class_names') else ["Breed1", "Breed2", "Breed3", "Breed4", "Breed5", "Breed6", "Breed7", "Breed8"]
+    
+    # ✅ Get Breed Name
+    predicted_breed = class_indices[predicted_class] if predicted_class < len(class_indices) else "Unknown"
 
     return {"predicted_breed": predicted_breed, "confidence": float(np.max(predictions))}
 
-# ✅ Run FastAPI Server (for local testing)
+# ✅ Run FastAPI Server
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
